@@ -31,10 +31,11 @@ public class Pig {
         Player actual;            // Actual player for round (must use)
         boolean aborted = false;  // Game aborted by player?
         int action;
+        Player temp;
 
         // Hard coded 2 players, replace *last* of all with ...
-        players = new Player[]{new Player("Olle"), new Player("Fia"), new Player("Matret")};
-        //players = getPlayers();  // ... this (method to read in all players)
+        //players = new Player[]{new Player("Olle"), new Player("Fia"), new Player("Matret")};
+        players = getPlayers();  // ... this (method to read in all players)
 
         actual = players[0];
 
@@ -47,8 +48,12 @@ public class Pig {
             String input = getPlayerChoice(actual);
 
             action = determineAction(input);
-            performAction(action, actual, players, winPts, aborted);
-
+            temp = performAction(action, actual, players, winPts, aborted);
+            if (checkWin(actual, winPts)) {
+                gameOverMsg(actual, aborted);
+                aborted = true;
+            }
+            actual = temp;
         }
 
 
@@ -89,7 +94,7 @@ public class Pig {
         return 0;
     }
 
-    void performAction(int action, Player actual, Player[] players, int winPts, boolean aborted) {
+    Player performAction(int action, Player actual, Player[] players, int winPts, boolean aborted) {
         //Roll die
         if (action == 1) {
             int diceRoll = rand.nextInt(6) + 1;
@@ -99,29 +104,21 @@ public class Pig {
 
 
                 //Låt actual peka på nästa index som tas fram via changePlayer
-                //TODO lös problem med call by value
-                actual = players[changePlayer(players, actual)];
+                return players[changePlayer(players, actual)];
 
             } else {
                 actual.roundPts += diceRoll;
                 roundMsg(diceRoll, actual);
-
-                if (checkWin(actual, winPts)) {
-                    gameOverMsg(actual, aborted);
-                    //TODO lös problem med call by value.
-                    aborted = true;
-                }
             }
         } else if (action == 2) {
             addPoint(actual);
-            //TODO lös problem, kolla upp interface, eller byt till c++
-            actual = players[changePlayer(players, actual)];
+            return players[changePlayer(players, actual)];
 
         } else if (action == 3) {
             aborted = true;
             gameOverMsg(actual, aborted);
         }
-
+        return actual;
     }
 
     boolean isOne(int input) {
@@ -184,8 +181,18 @@ public class Pig {
     }
 
     Player[] getPlayers() {
-        // TODO
-        return null;
+        out.print("How many players? > ");
+        int amount = sc.nextInt();
+        sc.nextLine();
+        Player[] players = new Player[amount];
+        //Fills players-array
+        for (int i = 0; i < amount; i++){
+            out.print("Name for player " + (i + 1) + " > ");
+            players[i] = new Player(sc.nextLine());
+
+        }
+
+        return players;
     }
 
     // ---------- Class -------------
@@ -200,6 +207,7 @@ public class Pig {
             this.name = name;
         }
     }
+
 
     // ----- Testing -----------------
     // Here you run your tests i.e. call your game logic methods
